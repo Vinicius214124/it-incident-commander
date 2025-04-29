@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SeverityBadge } from "@/components/ui/severity-badge";
@@ -10,10 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Incidente } from "@/types/incident";
+import { Incidente, StatusIncidente } from "@/types/incident";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StatusIncidente } from "@/types/incident";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -197,7 +195,7 @@ export default function IncidentDetails() {
                     <Button 
                       variant={incident.status === 'resolvido' ? "outline" : "default"}
                       onClick={() => updateIncidentStatus('resolvido')}
-                      disabled={incident.status === 'resolvido' || isUpdating}
+                      disabled={isUpdating || incident.status === 'resolvido'}
                       className="sm:w-auto w-full"
                     >
                       {isUpdating ? "Atualizando..." : "Marcar como Resolvido"}

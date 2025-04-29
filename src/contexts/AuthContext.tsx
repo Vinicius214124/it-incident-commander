@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
-import { PerfilUsuario } from "@/types/incident";
+import { PerfilUsuario, SetorIncidente } from "@/types/incident";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
@@ -79,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data) {
         setPerfil({
           ...data,
+          setor: data.setor as SetorIncidente,
           criado_em: new Date(data.criado_em),
           atualizado_em: new Date(data.atualizado_em)
         });
