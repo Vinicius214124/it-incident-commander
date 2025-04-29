@@ -4,10 +4,12 @@ import { useState } from "react";
 import { SidebarNav } from "./SidebarNav";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-
+  const { perfil } = useAuth();
+  
   return (
     <div
       className={cn(
@@ -19,7 +21,9 @@ export function Sidebar() {
         {!collapsed && (
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-6 w-6 text-primary" />
-            <span className="font-bold">Incident Commander</span>
+            <span className="font-bold">
+              {perfil?.setor === 'TI' ? 'Comandante TI' : 'Suporte'}
+            </span>
           </div>
         )}
         {collapsed && (

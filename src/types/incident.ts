@@ -1,20 +1,33 @@
 
-export type IncidentSeverity = "critical" | "high" | "medium" | "low";
+export type SeveridadeIncidente = "critico" | "alto" | "medio" | "baixo";
 
-export type IncidentStatus = "open" | "in-progress" | "resolved";
+export type StatusIncidente = "aberto" | "em-progresso" | "resolvido";
 
-export interface Incident {
+export type SetorIncidente = "TI" | "Suporte";
+
+export interface Incidente {
   id: string;
-  company: string;
-  system: string;
-  startTime: Date;
-  endTime?: Date;
-  impactCount: number;
-  description: string;
-  resolutionActions?: string;
-  severity: IncidentSeverity;
-  status: IncidentStatus;
-  createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
+  empresa: string;
+  sistema: string;
+  hora_inicio: Date;
+  hora_fim?: Date;
+  total_impactados: number;
+  descricao: string;
+  acoes_resolucao?: string;
+  severidade: SeveridadeIncidente;
+  status: StatusIncidente;
+  setor: SetorIncidente;
+  criado_por: string;
+  criado_em: Date;
+  atualizado_em: Date;
+}
+
+export interface PerfilUsuario {
+  id: string;
+  nome: string;
+  sobrenome: string;
+  setor: SetorIncidente;
+  cargo: string;
+  criado_em: Date;
+  atualizado_em: Date;
 }

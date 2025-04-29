@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { mockIncidents } from "@/lib/mock-data";
 import { IncidentTable } from "@/components/incidents/IncidentTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,43 +12,80 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SeverityBadge } from "@/components/ui/severity-badge";
-import { IncidentSeverity, IncidentStatus } from "@/types/incident";
+import { Incidente, SeveridadeIncidente, StatusIncidente } from "@/types/incident";
 import { StatusBadge } from "@/components/incidents/StatusBadge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function IncidentsList() {
   const navigate = useNavigate();
+  const { perfil } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   
-  const filteredIncidents = mockIncidents.filter(incident => {
-    const matchesSearch = 
-      incident.company.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      incident.system.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      incident.description.toLowerCase().includes(searchTerm.toLowerCase());
+  const { data: incidentes = [], isLoading } = useQuery({
+    queryKey: ['incidentes', filterSeverity, filterStatus],
+    queryFn: async () => {
+      let query = supabase.from('incidentes').select('*');
       
-    const matchesSeverity = filterSeverity === "all" || incident.severity === filterSeverity;
-    const matchesStatus = filterStatus === "all" || incident.status === filterStatus;
-    
-    return matchesSearch && matchesSeverity && matchesStatus;
+      // Aplicar filtros
+      if (filterSeverity !== 'all') {
+        query = query.eq('severidade', filterSeverity);
+      }
+      
+      if (filterStatus !== 'all') {
+        query = query.eq('status', filterStatus);
+      }
+      
+      // Se for usuário de suporte, filtrar apenas os incidentes de suporte
+      if (perfil?.setor === 'Suporte') {
+        query = query.eq('setor', 'Suporte');
+      }
+      
+      const { data, error } = await query.order('criado_em', { ascending: false });
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data.map(inc => ({
+        ...inc,
+        hora_inicio: new Date(inc.hora_inicio),
+        hora_fim: inc.hora_fim ? new Date(inc.hora_fim) : undefined,
+        criado_em: new Date(inc.criado_em),
+        atualizado_em: new Date(inc.atualizado_em)
+      })) as Incidente[];
+    },
+    enabled: !!perfil
+  });
+  
+  const filteredIncidentes = incidentes.filter(incident => {
+    const matchesSearch = 
+      incident.empresa.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      incident.sistema.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      incident.descricao.toLowerCase().includes(searchTerm.toLowerCase());
+      
+    return matchesSearch;
   });
   
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Incidents</h1>
-          <p className="text-muted-foreground">View and manage all IT incidents.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Incidentes</h1>
+          <p className="text-muted-foreground">Visualize e gerencie todos os incidentes de TI.</p>
         </div>
-        <Button onClick={() => navigate("/incidents/new")}>
-          Create Incident
+        <Button onClick={() => navigate("/incidentes/novo")}>
+          Criar Incidente
         </Button>
       </div>
       
       <div className="flex flex-col md:flex-row gap-4">
         <div className="md:flex-1">
           <Input 
-            placeholder="Search incidents..." 
+            placeholder="Buscar incidentes..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -57,32 +93,32 @@ export default function IncidentsList() {
         <div className="w-full md:w-48">
           <Select value={filterSeverity} onValueChange={setFilterSeverity}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by severity" />
+              <SelectValue placeholder="Filtrar por severidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Severities</SelectItem>
-              <SelectItem value="critical">
+              <SelectItem value="all">Todas Severidades</SelectItem>
+              <SelectItem value="critico">
                 <div className="flex items-center gap-2">
-                  <SeverityBadge severity="critical" />
-                  <span>Critical</span>
+                  <SeverityBadge severity="critico" />
+                  <span>Crítico</span>
                 </div>
               </SelectItem>
-              <SelectItem value="high">
+              <SelectItem value="alto">
                 <div className="flex items-center gap-2">
-                  <SeverityBadge severity="high" />
-                  <span>High</span>
+                  <SeverityBadge severity="alto" />
+                  <span>Alto</span>
                 </div>
               </SelectItem>
-              <SelectItem value="medium">
+              <SelectItem value="medio">
                 <div className="flex items-center gap-2">
-                  <SeverityBadge severity="medium" />
-                  <span>Medium</span>
+                  <SeverityBadge severity="medio" />
+                  <span>Médio</span>
                 </div>
               </SelectItem>
-              <SelectItem value="low">
+              <SelectItem value="baixo">
                 <div className="flex items-center gap-2">
-                  <SeverityBadge severity="low" />
-                  <span>Low</span>
+                  <SeverityBadge severity="baixo" />
+                  <span>Baixo</span>
                 </div>
               </SelectItem>
             </SelectContent>
@@ -91,26 +127,26 @@ export default function IncidentsList() {
         <div className="w-full md:w-48">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="open">
+              <SelectItem value="all">Todos Status</SelectItem>
+              <SelectItem value="aberto">
                 <div className="flex items-center gap-2">
-                  <StatusBadge status="open" />
-                  <span>Open</span>
+                  <StatusBadge status="aberto" />
+                  <span>Aberto</span>
                 </div>
               </SelectItem>
-              <SelectItem value="in-progress">
+              <SelectItem value="em-progresso">
                 <div className="flex items-center gap-2">
-                  <StatusBadge status="in-progress" />
-                  <span>In Progress</span>
+                  <StatusBadge status="em-progresso" />
+                  <span>Em Progresso</span>
                 </div>
               </SelectItem>
-              <SelectItem value="resolved">
+              <SelectItem value="resolvido">
                 <div className="flex items-center gap-2">
-                  <StatusBadge status="resolved" />
-                  <span>Resolved</span>
+                  <StatusBadge status="resolvido" />
+                  <span>Resolvido</span>
                 </div>
               </SelectItem>
             </SelectContent>
@@ -118,7 +154,13 @@ export default function IncidentsList() {
         </div>
       </div>
       
-      <IncidentTable incidents={filteredIncidents} />
+      {isLoading ? (
+        <div className="flex justify-center items-center p-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <IncidentTable incidents={filteredIncidentes} />
+      )}
     </div>
   );
 }

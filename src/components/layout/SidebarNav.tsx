@@ -7,46 +7,64 @@ import {
   FileText,
   Home,
   Settings,
-  ShieldAlert
+  ShieldAlert,
+  Users,
+  LineChart
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { SeverityBadge } from "../ui/severity-badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   collapsed?: boolean;
 }
 
 export function SidebarNav({ collapsed, className, ...props }: SidebarNavProps) {
-  const activeIncidents = 3; // This would come from a context/state in real app
+  const { perfil } = useAuth();
+  const isTI = perfil?.setor === 'TI';
+  
+  // Número de incidentes ativos - em uma aplicação real, isso viria da API
+  const activeIncidents = 3;
 
   return (
     <nav className={cn("flex flex-col gap-2", className)} {...props}>
-      <NavItem to="/" icon={Home} collapsed={collapsed}>
+      <NavItem to="/dashboard" icon={Home} collapsed={collapsed}>
         Dashboard
       </NavItem>
       
       <NavItem 
-        to="/incidents" 
+        to="/incidentes" 
         icon={Bell} 
         badge={activeIncidents > 0} 
         badgeContent={activeIncidents} 
         collapsed={collapsed}
       >
-        Incidents
+        Incidentes
       </NavItem>
       
-      <NavItem to="/calendar" icon={Calendar} collapsed={collapsed}>
-        Calendar
+      {/* Área TI - acessível apenas para usuários de TI */}
+      {isTI && (
+        <>
+          <NavItem to="/usuarios" icon={Users} collapsed={collapsed}>
+            Usuários
+          </NavItem>
+          
+          <NavItem to="/estatisticas" icon={LineChart} collapsed={collapsed}>
+            Estatísticas
+          </NavItem>
+        </>
+      )}
+      
+      <NavItem to="/calendario" icon={Calendar} collapsed={collapsed}>
+        Calendário
       </NavItem>
       
-      <NavItem to="/reports" icon={FileText} collapsed={collapsed}>
-        Reports
+      <NavItem to="/relatorios" icon={FileText} collapsed={collapsed}>
+        Relatórios
       </NavItem>
       
       <div className="h-px bg-sidebar-border my-2" />
       
-      <NavItem to="/settings" icon={Settings} collapsed={collapsed}>
-        Settings
+      <NavItem to="/configuracoes" icon={Settings} collapsed={collapsed}>
+        Configurações
       </NavItem>
     </nav>
   );

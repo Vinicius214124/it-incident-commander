@@ -13,107 +13,226 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { SeveridadeIncidente, SetorIncidente } from "@/types/incident";
 
 export function NewIncidentForm() {
   const { toast } = useToast();
+  const { user, perfil } = useAuth();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const [empresa, setEmpresa] = useState("");
+  const [sistema, setSistema] = useState("");
+  const [horaInicio, setHoraInicio] = useState("");
+  const [horaFim, setHoraFim] = useState("");
+  const [severidade, setSeveridade] = useState<SeveridadeIncidente | "">("");
+  const [totalImpactados, setTotalImpactados] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [acoesResolucao, setAcoesResolucao] = useState("");
+  const [setor, setSetor] = useState<SetorIncidente | "">(perfil?.setor || "");
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para criar um incidente.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (severidade === "" || setor === "") {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const { data, error } = await supabase
+        .from('incidentes')
+        .insert({
+          empresa,
+          sistema,
+          hora_inicio: horaInicio,
+          hora_fim: horaFim || null,
+          total_impactados: parseInt(totalImpactados, 10) || 0,
+          descricao,
+          acoes_resolucao: acoesResolucao || null,
+          severidade,
+          status: "aberto",
+          setor,
+          criado_por: user.id
+        })
+        .select();
+      
+      if (error) throw error;
+      
       toast({
-        title: "Incident Created",
-        description: "The incident has been successfully created.",
+        title: "Incidente Criado",
+        description: "O incidente foi registrado com sucesso.",
       });
-    }, 1000);
+      
+      navigate("/incidentes");
+    } catch (error: any) {
+      console.error("Erro ao criar incidente:", error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível criar o incidente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle>Create New Incident</CardTitle>
+          <CardTitle>Criar Novo Incidente</CardTitle>
           <CardDescription>
-            Report a new incident in a third-party system.
+            Registre um novo incidente em um sistema.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
-              <Input id="company" placeholder="Affected company" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="system">System</Label>
-              <Input id="system" placeholder="Affected system" required />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time</Label>
-              <Input id="startTime" type="datetime-local" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime">End Time (Optional)</Label>
-              <Input id="endTime" type="datetime-local" />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="severity">Severity</Label>
-              <Select>
-                <SelectTrigger id="severity">
-                  <SelectValue placeholder="Select severity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="critical">Critical</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="impactCount">Users Impacted</Label>
+              <Label htmlFor="empresa">Empresa</Label>
               <Input 
-                id="impactCount" 
-                type="number" 
-                min="0" 
-                placeholder="Number of users affected" 
+                id="empresa" 
+                placeholder="Empresa afetada" 
+                value={empresa}
+                onChange={(e) => setEmpresa(e.target.value)}
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sistema">Sistema</Label>
+              <Input 
+                id="sistema" 
+                placeholder="Sistema afetado" 
+                value={sistema}
+                onChange={(e) => setSistema(e.target.value)}
                 required 
               />
             </div>
           </div>
           
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="horaInicio">Hora de Início</Label>
+              <Input 
+                id="horaInicio" 
+                type="datetime-local" 
+                value={horaInicio}
+                onChange={(e) => setHoraInicio(e.target.value)}
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="horaFim">Hora de Término (Opcional)</Label>
+              <Input 
+                id="horaFim" 
+                type="datetime-local" 
+                value={horaFim}
+                onChange={(e) => setHoraFim(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="severidade">Severidade</Label>
+              <Select 
+                value={severidade} 
+                onValueChange={(value) => setSeveridade(value as SeveridadeIncidente)}
+              >
+                <SelectTrigger id="severidade">
+                  <SelectValue placeholder="Selecione a severidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="critico">Crítico</SelectItem>
+                  <SelectItem value="alto">Alto</SelectItem>
+                  <SelectItem value="medio">Médio</SelectItem>
+                  <SelectItem value="baixo">Baixo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="totalImpactados">Usuários Impactados</Label>
+              <Input 
+                id="totalImpactados" 
+                type="number" 
+                min="0" 
+                placeholder="Número de usuários afetados" 
+                value={totalImpactados}
+                onChange={(e) => setTotalImpactados(e.target.value)}
+                required 
+              />
+            </div>
+          </div>
+
+          {perfil?.setor === 'TI' && (
+            <div className="space-y-2">
+              <Label htmlFor="setor">Setor Responsável</Label>
+              <Select 
+                value={setor} 
+                onValueChange={(value) => setSetor(value as SetorIncidente)}
+              >
+                <SelectTrigger id="setor">
+                  <SelectValue placeholder="Selecione o setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TI">TI</SelectItem>
+                  <SelectItem value="Suporte">Suporte</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="descricao">Descrição</Label>
             <Textarea 
-              id="description" 
-              placeholder="Detailed description of the incident..." 
+              id="descricao" 
+              placeholder="Descrição detalhada do incidente..." 
               className="min-h-[100px]"
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="resolutionActions">Resolution Actions (Optional)</Label>
+            <Label htmlFor="acoesResolucao">Ações de Resolução (Opcional)</Label>
             <Textarea 
-              id="resolutionActions" 
-              placeholder="Steps taken to resolve the incident..." 
+              id="acoesResolucao" 
+              placeholder="Passos tomados para resolver o incidente..." 
               className="min-h-[100px]"
+              value={acoesResolucao}
+              onChange={(e) => setAcoesResolucao(e.target.value)}
             />
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" type="button">Cancel</Button>
+          <Button 
+            variant="outline" 
+            type="button" 
+            onClick={() => navigate("/incidentes")}
+          >
+            Cancelar
+          </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Incident"}
+            {isSubmitting ? "Criando..." : "Criar Incidente"}
           </Button>
         </CardFooter>
       </Card>

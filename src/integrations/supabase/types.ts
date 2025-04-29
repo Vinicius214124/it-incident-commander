@@ -9,13 +9,135 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      incidentes: {
+        Row: {
+          acoes_resolucao: string | null
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          descricao: string
+          empresa: string
+          hora_fim: string | null
+          hora_inicio: string
+          id: string
+          setor: string
+          severidade: string
+          sistema: string
+          status: string
+          total_impactados: number
+        }
+        Insert: {
+          acoes_resolucao?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          criado_por: string
+          descricao: string
+          empresa: string
+          hora_fim?: string | null
+          hora_inicio: string
+          id?: string
+          setor: string
+          severidade: string
+          sistema: string
+          status?: string
+          total_impactados?: number
+        }
+        Update: {
+          acoes_resolucao?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          descricao?: string
+          empresa?: string
+          hora_fim?: string | null
+          hora_inicio?: string
+          id?: string
+          setor?: string
+          severidade?: string
+          sistema?: string
+          status?: string
+          total_impactados?: number
+        }
+        Relationships: []
+      }
+      logs_auditoria: {
+        Row: {
+          acao: string
+          criado_em: string
+          detalhes: Json | null
+          id: string
+          incidente_id: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          acao: string
+          criado_em?: string
+          detalhes?: Json | null
+          id?: string
+          incidente_id?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          acao?: string
+          criado_em?: string
+          detalhes?: Json | null
+          id?: string
+          incidente_id?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_auditoria_incidente_id_fkey"
+            columns: ["incidente_id"]
+            isOneToOne: false
+            referencedRelation: "incidentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      perfis: {
+        Row: {
+          atualizado_em: string
+          cargo: string
+          criado_em: string
+          id: string
+          nome: string
+          setor: string
+          sobrenome: string
+        }
+        Insert: {
+          atualizado_em?: string
+          cargo: string
+          criado_em?: string
+          id: string
+          nome: string
+          setor: string
+          sobrenome: string
+        }
+        Update: {
+          atualizado_em?: string
+          cargo?: string
+          criado_em?: string
+          id?: string
+          nome?: string
+          setor?: string
+          sobrenome?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_setor: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_ti_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
